@@ -9,6 +9,12 @@ type Step = 1 | 2 | 3;
 
 interface ContribData { cuit: string; razonSocial: string; condicionIva: string; }
 
+// Fecha de hoy en formato YYYY-MM-DD respetando timezone local (no UTC)
+function hoyLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 export default function NuevaFacturaPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
@@ -26,8 +32,9 @@ export default function NuevaFacturaPage() {
   const [descripcion, setDescripcion] = useState('');
   const [monto, setMonto] = useState('');
   const [formaPago, setFormaPago] = useState('Contado');
-  const [periodoDesde, setPeriodoDesde] = useState('');
-  const [periodoHasta, setPeriodoHasta] = useState('');
+  const [periodoDesde, setPeriodoDesde] = useState(hoyLocal);
+  const [periodoHasta, setPeriodoHasta] = useState(hoyLocal);
+  const [fechaVencPago, setFechaVencPago] = useState(hoyLocal);
 
   // Step 3 — Loading / Result
   const [emitting, setEmitting] = useState(false);
@@ -58,7 +65,7 @@ export default function NuevaFacturaPage() {
     setEmitting(true);
     setError('');
     try {
-      const hoy = new Date().toISOString().slice(0, 10);
+      const hoy = hoyLocal();
       const res = await fetch('/api/factura/emitir', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -71,7 +78,7 @@ export default function NuevaFacturaPage() {
           concepto,
           fechaDesde: periodoDesde || hoy,
           fechaHasta: periodoHasta || hoy,
-          fechaVtoPago: periodoHasta || hoy,
+          fechaVtoPago: fechaVencPago || hoy,
         }),
       });
       const data = await res.json();
@@ -283,6 +290,11 @@ export default function NuevaFacturaPage() {
                 </div>
               </div>
             )}
+
+            <div className="form-group">
+              <label className="form-label">Fecha de vencimiento de pago</label>
+              <input type="date" className="form-input" value={fechaVencPago} onChange={e => setFechaVencPago(e.target.value)} min={hoyLocal()} />
+            </div>
 
             <div className="form-group">
               <label className="form-label">Importe total (ARS)</label>
