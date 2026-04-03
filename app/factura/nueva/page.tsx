@@ -25,6 +25,7 @@ export default function NuevaFacturaPage() {
   const [concepto, setConcepto] = useState(2);
   const [descripcion, setDescripcion] = useState('');
   const [monto, setMonto] = useState('');
+  const [formaPago, setFormaPago] = useState('Contado');
   const [periodoDesde, setPeriodoDesde] = useState('');
   const [periodoHasta, setPeriodoHasta] = useState('');
 
@@ -128,6 +129,7 @@ export default function NuevaFacturaPage() {
           clienteCondicionIva: esConsumidorFinal ? 'Consumidor Final' : (contrib?.condicionIva || 'Responsable Inscripto'),
           concepto,
           descripcion,
+          formaPago,
           periodoDesde,
           periodoHasta,
         }),
@@ -255,6 +257,18 @@ export default function NuevaFacturaPage() {
             <div className="form-group">
               <label className="form-label">Descripción</label>
               <input className="form-input" placeholder="ej: Desarrollo web mes de marzo" value={descripcion} onChange={e => setDescripcion(e.target.value)} />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Forma de pago</label>
+              <select className="form-input" value={formaPago} onChange={e => setFormaPago(e.target.value)}>
+                <option>Contado</option>
+                <option>Transferencia bancaria</option>
+                <option>Cheque</option>
+                <option>Mercado Pago</option>
+                <option>Cuenta corriente</option>
+                <option>Otro</option>
+              </select>
             </div>
 
             {(concepto === 2 || concepto === 3) && (
