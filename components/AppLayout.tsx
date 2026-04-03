@@ -11,16 +11,31 @@ const NAV_ITEMS = [
   { href: '/clientes', icon: '👥', label: 'Clientes' },
 ];
 
+const ACCOUNT_ITEMS = [
+  { href: '/perfil', icon: '👤', label: 'Mi perfil' },
+];
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  const [initials, setInitials] = useState('');
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push('/login');
-      else setUserEmail(data.user.email || '');
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) { router.push('/login'); return; }
+      setUserEmail(data.user.email || '');
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('nombre, apellido')
+        .eq('id', data.user.id)
+        .single();
+      if (profile?.nombre || profile?.apellido) {
+        setInitials(`${profile.nombre?.[0] || ''}${profile.apellido?.[0] || ''}`.toUpperCase());
+      } else {
+        setInitials((data.user.email?.[0] || 'U').toUpperCase());
+      }
     });
   }, [router]);
 
@@ -37,7 +52,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile header */}
       <header className="mobile-header">
         <button className="hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
-        <span style={{ fontWeight: 700, fontSize: 16 }}>Factur<span style={{ color: 'var(--primary)' }}>AR</span></span>
+        <span style={{ fontWeight: 700, fontSize: 16, flex: 1 }}>Factur<span style={{ color: 'var(--primary)' }}>AR</span></span>
+        <Link
+          href="/perfil"
+          style={{
+            width: 34, height: 34, borderRadius: '50%',
+            background: 'var(--primary-dim)', border: '1px solid var(--primary)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 13, fontWeight: 700, color: 'var(--primary)', flexShrink: 0,
+          }}
+        >
+          {initials || '👤'}
+        </Link>
       </header>
 
       {/* Sidebar */}
@@ -60,9 +86,32 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Link>
         ))}
 
+        <div className="nav-section-label" style={{ marginTop: 16 }}>Cuenta</div>
+        {ACCOUNT_ITEMS.map(item => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`nav-link${pathname === item.href ? ' active' : ''}`}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <span className="nav-icon">{item.icon}</span>
+            {item.label}
+          </Link>
+        ))}
+
         <div className="sidebar-footer">
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: '0 12px', marginBottom: 10, wordBreak: 'break-all' }}>
-            {userEmail}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 12px', marginBottom: 10 }}>
+            <div style={{
+              width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+              background: 'var(--primary-dim)', border: '1px solid var(--primary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 700, color: 'var(--primary)',
+            }}>
+              {initials || '👤'}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', wordBreak: 'break-all', minWidth: 0 }}>
+              {userEmail}
+            </div>
           </div>
           <button className="nav-link btn-ghost" style={{ width: '100%', border: 'none' }} onClick={handleLogout}>
             <span className="nav-icon">🚪</span> Cerrar sesión
