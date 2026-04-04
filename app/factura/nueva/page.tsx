@@ -29,6 +29,9 @@ export default function NuevaFacturaPage() {
   const [savedClientes, setSavedClientes] = useState<any[]>([]);
   const [loadingClientes, setLoadingClientes] = useState(false);
   const [showSavedSelector, setShowSavedSelector] = useState(false);
+  const [condicionIva, setCondicionIva] = useState('Consumidor Final');
+  const [guardarCliente, setGuardarCliente] = useState(false);
+  const [isNewClient, setIsNewClient] = useState(true);
 
   // Step 2 — Factura
   const [concepto, setConcepto] = useState(2);
@@ -71,8 +74,11 @@ export default function NuevaFacturaPage() {
       razonSocial: c.razon_social,
       condicionIva: c.condicion_iva || 'Consumidor Final'
     });
+    setCondicionIva(c.condicion_iva || 'Consumidor Final');
     setClienteManual('');
     setShowSavedSelector(false);
+    setIsNewClient(false);
+    setGuardarCliente(false);
   };
 
   const buscarCuit = useCallback(async () => {
@@ -87,6 +93,10 @@ export default function NuevaFacturaPage() {
         setSearchError(data.error || 'CUIT no encontrado');
       } else {
         setContrib(data);
+        setCondicionIva(data.condicionIva || 'Consumidor Final');
+        // Check if it already exists in our db to avoid duplicates
+        const exists = savedClientes.find(sc => sc.cuit === data.cuit.replace(/-/g, ''));
+        setIsNewClient(!exists);
       }
     } catch {
       setSearchError('Error de conexión, intentá de nuevo.');
@@ -112,13 +122,13 @@ export default function NuevaFacturaPage() {
           fechaDesde: periodoDesde || hoy,
           fechaHasta: periodoHasta || hoy,
           fechaVtoPago: fechaVencPago || hoy,
-          condicionIvaReceptor: esConsumidorFinal ? 'Consumidor Final' : (contrib?.condicionIva || 'Consumidor Final')
+          condicionIvaReceptor: esConsumidorFinal ? 'Consumidor Final' : condicionIva
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      // Guardar en Supabase
+      // Guardar en Supabase - Factura
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase.from('facturas').insert({
@@ -137,6 +147,16 @@ export default function NuevaFacturaPage() {
           cae_vencimiento: data.vencimientoCAE || null,
           estado: 'emitida',
         });
+
+        // Guardar Cliente si se solicitó y es nuevo
+        if (guardarCliente && !esConsumidorFinal && isNewClient) {
+          await supabase.from('clientes').insert({
+            user_id: user.id,
+            razon_social: contrib?.razonSocial || clienteManual,
+            cuit: cuitInput.replace(/-/g, ''),
+            condicion_iva: condicionIva
+          });
+        }
       }
 
       setResult(data);
@@ -308,9 +328,37 @@ export default function NuevaFacturaPage() {
               {searchError && <div className="alert alert-error" style={{ marginBottom: 16 }}><span>⚠️</span> {searchError}</div>}
 
               {contrib && (
-                <div className="autocomplete-result" style={{ position: 'relative', top: 0, marginBottom: 16 }}>
-                  <div className="autocomplete-name">✓ {contrib.razonSocial}</div>
-                  <div className="autocomplete-meta">CUIT: {contrib.cuit} · {contrib.condicionIva}</div>
+                <div style={{ background: 'var(--surface2)', borderRadius: '16px', padding: '16px', marginBottom: 16, border: '1px solid var(--border)'}}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <div>
+                      <div style={{ fontSize: '15px', fontWeight: 600 }}>✓ {contrib.razonSocial}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>CUIT: {contrib.cuit}</div>
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 12 }}>
+                    <label className="form-label">Condición IVA Receptor</label>
+                    <select className="form-input" value={condicionIva} onChange={e => setCondicionIva(e.target.value)}>
+                      <option>Consumidor Final</option>
+                      <option>Responsable Inscripto</option>
+                      <option>Monotributista</option>
+                      <option>IVA Sujeto Exento</option>
+                      <option>IVA No Alcanzado</option>
+                      <option>Responsable Monotributo</option>
+                    </select>
+                  </div>
+
+                  {isNewClient && (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, background: 'rgba(99,102,241,0.05)', padding: '10px', borderRadius: '8px', color: 'var(--primary)' }}>
+                      <input
+                        type="checkbox"
+                        checked={guardarCliente}
+                        onChange={e => setGuardarCliente(e.target.checked)}
+                        style={{ width: 15, height: 15, accentColor: 'var(--primary)' }}
+                      />
+                      <span>💾 Guardar como cliente en mis contactos</span>
+                    </label>
+                  )}
                 </div>
               )}
 

@@ -138,6 +138,8 @@ export default function ClientesPage() {
                 <option>Responsable Inscripto</option>
                 <option>Monotributista</option>
                 <option>IVA Sujeto Exento</option>
+                <option>IVA No Alcanzado</option>
+                <option>Responsable Monotributo</option>
               </select>
             </div>
             <button type="submit" className="btn btn-primary" disabled={saving} style={{ alignSelf: 'flex-start' }}>
