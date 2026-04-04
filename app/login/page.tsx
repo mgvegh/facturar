@@ -81,8 +81,8 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="auth-switch">
-            ¿No tenés cuenta? <Link href="/register" className="auth-link">Crear cuenta</Link>
+          <div className="auth-switch" style={{ color: 'transparent', userSelect: 'none' }}>
+            _
           </div>
         </div>
       </div>
