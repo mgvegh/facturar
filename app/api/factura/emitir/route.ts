@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-      puntoVenta = parseInt(process.env.PUNTO_VENTA || '2', 10),
+      puntoVenta = 2,
       tipoComprobante = 11,
       docTipo = 80,
       docNro,
@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
       fechaDesde,
       fechaHasta,
       fechaVtoPago,
+      condicionIvaReceptor,
     } = body;
 
     const ultimoNro = await getAfip().ElectronicBilling.getLastVoucher(puntoVenta, tipoComprobante);
@@ -22,6 +23,14 @@ export async function POST(req: NextRequest) {
     const hoy = new Date();
     const fechaHoy = parseInt(hoy.toISOString().slice(0, 10).replace(/-/g, ''));
     const esConsumidorFinal = !docNro || docNro === '0';
+
+    let condicionIvaId = 5; // CF
+    if (!esConsumidorFinal && condicionIvaReceptor) {
+      if (condicionIvaReceptor.includes('Inscripto')) condicionIvaId = 1;
+      else if (condicionIvaReceptor.includes('Monotribut')) condicionIvaId = 6;
+      else if (condicionIvaReceptor.includes('Exento')) condicionIvaId = 4;
+      else if (condicionIvaReceptor.includes('No Alcanzado')) condicionIvaId = 3;
+    }
 
     const datosFactura: any = {
       CantReg: 1,
@@ -41,7 +50,7 @@ export async function POST(req: NextRequest) {
       ImpTrib: 0,
       MonId: 'PES',
       MonCotiz: 1,
-      CondicionIVAReceptorId: 5,
+      CondicionIVAReceptorId: condicionIvaId,
     };
 
     if (concepto === 2 || concepto === 3) {

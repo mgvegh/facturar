@@ -70,6 +70,7 @@ export default function NuevaFacturaPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          puntoVenta: 2,
           tipoComprobante: 11,
           docTipo: 80,
           docNro: esConsumidorFinal ? '0' : contrib?.cuit,
@@ -78,6 +79,7 @@ export default function NuevaFacturaPage() {
           fechaDesde: periodoDesde || hoy,
           fechaHasta: periodoHasta || hoy,
           fechaVtoPago: fechaVencPago || hoy,
+          condicionIvaReceptor: esConsumidorFinal ? 'Consumidor Final' : (contrib?.condicionIva || 'Consumidor Final')
         }),
       });
       const data = await res.json();
@@ -90,6 +92,7 @@ export default function NuevaFacturaPage() {
           user_id: user.id,
           cliente_nombre: esConsumidorFinal ? 'Consumidor Final' : (contrib?.razonSocial || clienteManual),
           numero: data.numero,
+          punto_venta: 2,
           tipo: 'Factura C',
           concepto: concepto === 1 ? 'Productos' : concepto === 2 ? 'Servicios' : 'Productos y servicios',
           descripcion,
@@ -124,6 +127,7 @@ export default function NuevaFacturaPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           numero: result.numero,
+          puntoVenta: 2,
           cae: result.cae,
           caeVencimiento: result.vencimientoCAE,
           fechaEmision: `${dd}/${mm}/${yyyy}`,
