@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/lib/supabase';
@@ -26,6 +26,9 @@ export default function NuevaFacturaPage() {
   const [searchError, setSearchError] = useState('');
   const [esConsumidorFinal, setEsConsumidorFinal] = useState(false);
   const [clienteManual, setClienteManual] = useState('');
+  const [savedClientes, setSavedClientes] = useState<any[]>([]);
+  const [loadingClientes, setLoadingClientes] = useState(false);
+  const [showSavedSelector, setShowSavedSelector] = useState(false);
 
   // Step 2 — Factura
   const [concepto, setConcepto] = useState(2);
@@ -41,6 +44,36 @@ export default function NuevaFacturaPage() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState('');
   const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  useEffect(() => {
+    loadSavedClientes();
+  }, []);
+
+  const loadSavedClientes = async () => {
+    setLoadingClientes(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase
+        .from('clientes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('razon_social');
+      if (data) setSavedClientes(data);
+    }
+    setLoadingClientes(false);
+  };
+
+  const seleccionarCliente = (c: any) => {
+    setEsConsumidorFinal(false);
+    setCuitInput(c.cuit || '');
+    setContrib({
+      cuit: c.cuit || '',
+      razonSocial: c.razon_social,
+      condicionIva: c.condicion_iva || 'Consumidor Final'
+    });
+    setClienteManual('');
+    setShowSavedSelector(false);
+  };
 
   const buscarCuit = useCallback(async () => {
     if (!cuitInput || cuitInput.length < 10) return;
@@ -190,6 +223,61 @@ export default function NuevaFacturaPage() {
               <span style={{ color: 'var(--text-soft)' }}>Consumidor Final (sin CUIT)</span>
             </label>
           </div>
+
+          {!esConsumidorFinal && savedClientes.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <button 
+                type="button" 
+                className="btn btn-ghost btn-sm" 
+                onClick={() => setShowSavedSelector(!showSavedSelector)}
+                style={{ marginBottom: 12, width: '100%', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '12px' }}
+              >
+                <span>{showSavedSelector ? '✕ Cerrar lista' : '👥 Seleccionar de mis clientes'}</span>
+                <span>{showSavedSelector ? '' : '↓'}</span>
+              </button>
+
+              {showSavedSelector && (
+                <div style={{ 
+                  background: 'var(--surface2)', 
+                  borderRadius: '16px', 
+                  padding: '8px', 
+                  maxHeight: '200px', 
+                  overflowY: 'auto',
+                  border: '1px solid var(--border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}>
+                  {savedClientes.map(c => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="btn-client-select"
+                      onClick={() => seleccionarCliente(c)}
+                      style={{
+                        padding: '10px 14px',
+                        textAlign: 'left',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: 'var(--text)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '2px',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <span style={{ fontSize: '14px', fontWeight: 600 }}>{c.razon_social}</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{c.cuit ? `CUIT: ${c.cuit}` : 'Sin CUIT'} · {c.condicion_iva}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {!esConsumidorFinal && (
             <>
