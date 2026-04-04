@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-      puntoVenta = 2,
+      puntoVenta = parseInt(process.env.PUNTO_VENTA || '2', 10),
       tipoComprobante = 11,
       docTipo = 80,
       docNro,

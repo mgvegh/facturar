@@ -4,7 +4,8 @@ import { getAfip } from '@/lib/afip';
 
 export async function POST(req: NextRequest) {
   try {
-    const { user_id, puntoVenta = 2, tipoComprobante = 11 } = await req.json();
+    const defaultPv = parseInt(process.env.PUNTO_VENTA || '2', 10);
+    const { user_id, puntoVenta = defaultPv, tipoComprobante = 11 } = await req.json();
 
     if (!user_id) {
       return NextResponse.json({ error: 'Falta user_id' }, { status: 400 });
