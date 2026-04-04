@@ -38,6 +38,9 @@ export async function GET(
         { status: 404 }
       );
     }
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const errorDetails = err.response?.data || err.message;
+    console.error('Error detallado de AFIP:', errorDetails);
+    
+    return NextResponse.json({ error: typeof errorDetails === 'object' ? JSON.stringify(errorDetails) : errorDetails }, { status: err.response?.status || 500 });
   }
 }

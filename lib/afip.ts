@@ -24,6 +24,8 @@ export function getAfip(): any {
       CUIT: parseInt(process.env.CUIT || '0'),
       production: process.env.PRODUCTION === 'true',
       access_token: process.env.AFIP_TOKEN || '',
+      // @ts-expect-error type definitions for afip.js are usually missing this property
+      res_folder: '/tmp',
     });
 
     return afipInstance;
