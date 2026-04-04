@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [facturas, setFacturas] = useState<Factura[]>([]);
   const [totals, setTotals] = useState({ cantidad: 0, monto: 0, mes: 0 });
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -50,6 +51,31 @@ export default function DashboardPage() {
       });
     }
     setLoading(false);
+  };
+
+  const handleSync = async () => {
+    if (!confirm('¿Estás seguro que deseas sincronizar el historial desde AFIP? Esto puede tomar unos segundos.')) return;
+    
+    setSyncing(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No hay usuario activo");
+
+      const res = await fetch('/api/factura/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id })
+      });
+      
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Error al sincronizar');
+      
+      alert(result.message);
+      await loadData(); // Recargar la tabla
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+    }
+    setSyncing(false);
   };
 
   const fmt = (n: number) => n.toLocaleString('es-AR', { maximumFractionDigits: 0 });
@@ -85,9 +111,19 @@ export default function DashboardPage() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ fontSize: 17, fontWeight: 600 }}>Últimas facturas</h2>
-        <Link href="/factura/nueva" className="btn btn-primary btn-sm">
-          ➕ Nueva Factura
-        </Link>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button 
+            className="btn btn-ghost btn-sm" 
+            onClick={handleSync} 
+            disabled={syncing}
+            style={{ fontSize: 13 }}
+          >
+            {syncing ? <><span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> Sincronizando...</> : '🔄 Sincronizar Historial AFIP'}
+          </button>
+          <Link href="/factura/nueva" className="btn btn-primary btn-sm">
+            ➕ Nueva Factura
+          </Link>
+        </div>
       </div>
 
       <div className="card" style={{ padding: 0 }}>
