@@ -22,8 +22,11 @@ export async function POST(req: NextRequest) {
       fechaVtoPago,
     } = body;
 
+    const emisorNombre = process.env.NOMBRE_EMISOR || 'Emisor';
+    const numPad = String(numero).padStart(8, '0');
+
     const data = {
-      file_name: `factura_c_${puntoVenta}_${numero}.pdf`,
+      file_name: `Factura_${numPad}_${emisorNombre.replace(/\s+/g, '_')}.pdf`,
       template: {
         name: 'invoice-c',
         params: {
@@ -33,7 +36,7 @@ export async function POST(req: NextRequest) {
           cae_due_date: formatearFecha(caeVencimiento),
           issuer_cuit: parseInt(process.env.CUIT || '0'),
           cae: parseInt(cae),
-          issuer_business_name: process.env.NOMBRE_EMISOR || 'Emisor',
+          issuer_business_name: emisorNombre,
           issuer_address: process.env.DIRECCION_EMISOR || '-',
           issuer_iva_condition: 'Monotributista',
           issuer_gross_income: process.env.INGRESOS_BRUTOS || '-',
