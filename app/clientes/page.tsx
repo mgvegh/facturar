@@ -35,7 +35,7 @@ export default function ClientesPage() {
       .from('clientes')
       .select('*')
       .eq('user_id', user.id)
-      .order('nombre');
+      .order('razon_social');
     if (data) setClientes(data);
     setLoading(false);
   };
