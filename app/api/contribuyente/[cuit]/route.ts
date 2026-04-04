@@ -19,7 +19,7 @@ export async function GET(
       });
     }
 
-    const persona = await getAfip().RegisterScopeFour.getTaxpayerDetails(cuit);
+    const persona = await getAfip().RegisterScopeThirteen.getTaxpayerDetails(cuit);
 
     if (!persona) {
       return NextResponse.json({ error: 'CUIT no encontrado' }, { status: 404 });
