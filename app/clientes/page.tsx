@@ -53,9 +53,19 @@ export default function ClientesPage() {
       if (!res.ok) throw new Error(data.error || 'No se encontró el CUIT');
       
       setNombre(data.razonSocial);
-      if (data.condicionIva?.toLowerCase().includes('inscripto')) setCondicion('Responsable Inscripto');
-      else if (data.condicionIva?.toLowerCase().includes('monotribut')) setCondicion('Monotributista');
-      else if (data.condicionIva?.toLowerCase().includes('exento')) setCondicion('Exento');
+      
+      // Update conditionally if it matches an option, or add option if necessary. 
+      // We know backend returns exact strings now.
+      const opcionesValidas = ['Consumidor Final', 'Responsable Inscripto', 'Monotributista', 'IVA Sujeto Exento'];
+      if (opcionesValidas.includes(data.condicionIva)) {
+        setCondicion(data.condicionIva);
+      } else if (data.condicionIva.toLowerCase().includes('inscripto')) {
+        setCondicion('Responsable Inscripto');
+      } else if (data.condicionIva.toLowerCase().includes('exento')) {
+        setCondicion('IVA Sujeto Exento');
+      } else {
+        setCondicion(data.condicionIva);
+      }
     } catch (err: any) {
       alert(err.message);
     }
@@ -67,10 +77,15 @@ export default function ClientesPage() {
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    await supabase.from('clientes').insert({ user_id: user.id, nombre, cuit, condicion_iva: condicion });
-    setNombre(''); setCuit(''); setCondicion('Consumidor Final');
-    setShowForm(false);
-    loadClientes();
+    const { error } = await supabase.from('clientes').insert({ user_id: user.id, nombre, cuit, condicion_iva: condicion });
+    
+    if (error) {
+      alert(`Error al guardar cliente: ${error.message}`);
+    } else {
+      setNombre(''); setCuit(''); setCondicion('Consumidor Final');
+      setShowForm(false);
+      loadClientes();
+    }
     setSaving(false);
   };
 
@@ -122,7 +137,7 @@ export default function ClientesPage() {
                 <option>Consumidor Final</option>
                 <option>Responsable Inscripto</option>
                 <option>Monotributista</option>
-                <option>Exento</option>
+                <option>IVA Sujeto Exento</option>
               </select>
             </div>
             <button type="submit" className="btn btn-primary" disabled={saving} style={{ alignSelf: 'flex-start' }}>

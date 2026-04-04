@@ -315,7 +315,12 @@ export default function NuevaFacturaPage() {
               <div style={{ background: 'var(--surface2)', borderRadius: 'var(--radius-sm)', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Receptor</span>
-                  <span style={{ fontWeight: 500 }}>{clienteNombreDisplay}</span>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 500 }}>{clienteNombreDisplay}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text-soft)' }}>
+                      {esConsumidorFinal ? 'Consumidor Final' : (contrib?.cuit ? `CUIT: ${contrib.cuit} · ${contrib.condicionIva}` : '')}
+                    </div>
+                  </div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-muted)' }}>Total</span>
