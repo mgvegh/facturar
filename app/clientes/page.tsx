@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 
 interface Cliente {
   id: string;
-  nombre: string;
+  razon_social: string;
   cuit?: string;
   condicion_iva?: string;
   total_facturado?: number;
@@ -77,7 +77,7 @@ export default function ClientesPage() {
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { error } = await supabase.from('clientes').insert({ user_id: user.id, nombre, cuit, condicion_iva: condicion });
+    const { error } = await supabase.from('clientes').insert({ user_id: user.id, razon_social: nombre, cuit, condicion_iva: condicion });
     
     if (error) {
       alert(`Error al guardar cliente: ${error.message}`);
@@ -96,7 +96,7 @@ export default function ClientesPage() {
   };
 
   const filtered = clientes.filter(c =>
-    c.nombre?.toLowerCase().includes(search.toLowerCase()) ||
+    c.razon_social?.toLowerCase().includes(search.toLowerCase()) ||
     c.cuit?.includes(search)
   );
 
@@ -183,7 +183,7 @@ export default function ClientesPage() {
               <tbody>
                 {filtered.map(c => (
                   <tr key={c.id}>
-                    <td style={{ fontWeight: 500, color: 'var(--text)' }}>{c.nombre}</td>
+                    <td style={{ fontWeight: 500, color: 'var(--text)' }}>{c.razon_social}</td>
                     <td>{c.cuit || '—'}</td>
                     <td><span className="badge badge-primary">{c.condicion_iva || '—'}</span></td>
                     <td style={{ fontWeight: 600 }}>
