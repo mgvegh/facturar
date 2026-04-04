@@ -20,6 +20,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState('');
   const [initials, setInitials] = useState('');
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         .eq('id', data.user.id)
         .single();
       if (profile?.nombre || profile?.apellido) {
+        setUserName(`${profile.nombre || ''} ${profile.apellido || ''}`.trim());
         setInitials(`${profile.nombre?.[0] || ''}${profile.apellido?.[0] || ''}`.toUpperCase());
       } else {
         setInitials((data.user.email?.[0] || 'U').toUpperCase());
@@ -110,7 +112,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {initials || '👤'}
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', wordBreak: 'break-all', minWidth: 0 }}>
-              {userEmail}
+              {userName || userEmail}
             </div>
           </div>
           <button className="nav-link btn-ghost" style={{ width: '100%', border: 'none' }} onClick={handleLogout}>

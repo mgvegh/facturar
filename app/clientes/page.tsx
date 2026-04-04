@@ -24,6 +24,7 @@ export default function ClientesPage() {
   const [cuit, setCuit] = useState('');
   const [condicion, setCondicion] = useState('Consumidor Final');
   const [saving, setSaving] = useState(false);
+  const [searchingCuit, setSearchingCuit] = useState(false);
 
   useEffect(() => { loadClientes(); }, []);
 
@@ -37,6 +38,28 @@ export default function ClientesPage() {
       .order('nombre');
     if (data) setClientes(data);
     setLoading(false);
+  };
+
+  const buscarCuit = async () => {
+    const cleanCuit = cuit.replace(/\D/g, '');
+    if (cleanCuit.length !== 11) {
+      alert('Ingresá un CUIT válido de 11 números');
+      return;
+    }
+    setSearchingCuit(true);
+    try {
+      const res = await fetch(`/api/contribuyente/${cleanCuit}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se encontró el CUIT');
+      
+      setNombre(data.razonSocial);
+      if (data.condicionIva?.toLowerCase().includes('inscripto')) setCondicion('Responsable Inscripto');
+      else if (data.condicionIva?.toLowerCase().includes('monotribut')) setCondicion('Monotributista');
+      else if (data.condicionIva?.toLowerCase().includes('exento')) setCondicion('Exento');
+    } catch (err: any) {
+      alert(err.message);
+    }
+    setSearchingCuit(false);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -85,7 +108,12 @@ export default function ClientesPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">CUIT</label>
-                <input className="form-input" value={cuit} onChange={e => setCuit(e.target.value)} placeholder="20-12345678-9" />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input className="form-input" value={cuit} onChange={e => setCuit(e.target.value)} placeholder="20-12345678-9" style={{ flex: 1 }} />
+                  <button type="button" className="btn btn-ghost" onClick={buscarCuit} disabled={searchingCuit} style={{ padding: '0 12px' }}>
+                    {searchingCuit ? '...' : '🔍 ARCA'}
+                  </button>
+                </div>
               </div>
             </div>
             <div className="form-group">
